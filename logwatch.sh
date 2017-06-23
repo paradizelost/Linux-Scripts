@@ -1,4 +1,13 @@
 #!/bin/bash
+LOG="/var/log/logs/192.168.1.113.log"
+LOG2="/var/log/logs/192.168.1.104.log"
+LOG3="/var/log/logs/192.168.1.252-1.log"
+EVT="$(comm  --nocheck-order -23 "$LOG" "$LOG.old" | wc -l)"
+EVT2="$(comm --nocheck-order -23 "$LOG2" "$LOG2.old" | wc -l)"
+EVT3="$(comm --nocheck-order -23 "$LOG3" "$LOG3.old" | wc -l)"
+PHONE1="5555555555@vtext.com"
+PHONE2="5555555555@vtext.com"
+PHONE3="5555555555@vtext.com"
 function procaplog(){
         while IFS=, read -r date mac; do
                 HOSTNAME=$(checkmac "$mac")
@@ -46,15 +55,7 @@ function alert_dan(){
         nail -s "$1" -S from="Alerts@hamik.net" "$PHONE1" <<<"."
         nail -s "$1" -S from="Alerts@hamik.net" "$PHONE3" <<<"."
 };
-LOG="/var/log/logs/192.168.1.113.log"
-LOG2="/var/log/logs/192.168.1.104.log"
-LOG3="/var/log/logs/192.168.1.252-1.log"
-EVT="$(comm  --nocheck-order -23 "$LOG" "$LOG.old" | wc -l)"
-EVT2="$(comm --nocheck-order -23 "$LOG2" "$LOG2.old" | wc -l)"
-EVT3="$(comm --nocheck-order -23 "$LOG3" "$LOG3.old" | wc -l)"
-PHONE1="15555555555@vtext.com"
-PHONE2="15555555555@vtext.com"
-PHONE3="15555555555@vtext.com"
+
 
 if [ "$EVT" != "0" ]; then
         cp "$LOG" "$LOG.old"

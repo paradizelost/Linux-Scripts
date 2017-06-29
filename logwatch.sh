@@ -10,6 +10,7 @@ EVT2="$(comm --nocheck-order -23 "$LOG2" "$LOG2.old" | wc -l)"
 EVT3="$(comm --nocheck-order -23 "$LOG3" "$LOG3.old" | wc -l)"
 function procaplog(){
 	while IFS=, read -r date mac; do
+		SENDALERT=$(checkdisconnects "$date" $mac)
 		echo "starting mac check"
 		echo "starting mac check" >> /var/log/logwatch.log
 		HOSTNAME=$(checkmac $mac)
@@ -19,13 +20,21 @@ function procaplog(){
 			case $HOSTNAME in
 			AMAZON_IOT_BUTTON)
 				/root/bin/sheet.py "$date" "Diaper Change" 
-				alert_dan "$date The button was pushed" 
+				if [ $SENDALERT -eq 1 ]; then 
+					alert_dan "$date The button was pushed" 
+				else
+					echo "Not alerting, Reconnection of $HOSTNAME" >> /var/log/logwatch.log
+				fi
 				python /root/bin/docast.py
 				;;
 			DAN_PIXEL)
-				echo "Alerting Alli"
-				echo "Alerting Alli" >> /var/log/logwatch.log
-				alert_alli "Dan is home at $date" 
+				if [ $SENDALERT -eq 1 ]; then 
+					echo "Alerting Alli"
+					echo "Alerting Alli" >> /var/log/logwatch.log
+					alert_alli "Dan is home at $date" 
+				else
+					echo "Not alerting, Reconnection of $HOSTNAME" >> /var/log/logwatch.log
+				fi
 				/root/bin/sheet.py "$date" $HOSTNAME
 				;;
 			*)
@@ -36,11 +45,23 @@ function procaplog(){
 			esac
 		else
 			echo "$mac"
-			alert_dan "$NOW - Unknown host $mac connected at $date"
+			if [ $SENDALERT -eq 1 ]; then 
+				alert_dan "$NOW - Unknown host $mac connected at $date"
+			else
+				echo "Not alerting, Reconnection of $mac" >> /var/log/logwatch.log
+			fi
 			/root/bin/sheet.py  "$date" $mac
 		fi
 	done
 };
+function checkdisconnects(){
+	THISCHECK=$(date -d "$1" +%s)
+	if [ "$(tail -n 30 "$LOG2" "$LOG" | grep "$(date +"%b %e")" |  grep "$2" | grep "disassociated")" ]; then
+		echo 0
+	else
+		echo 1
+	fi
+}
 function procswitchlog(){
 	echo "$1" >> /var/log/logwatch.log
 	echo "$1"
@@ -74,11 +95,11 @@ function alert_dan(){
 
 if [ "$EVT" != "0" ]; then
 	cp "$LOG" "$LOG.old" 
-	tail -n "$EVT" "$LOG" |  awk '/WPA: pairwise key handshake completed/ {print $1 " " $2 " " $3 ", " $9 }'|procaplog
+	tail -n "$EVT" "$LOG" |  awk '/IEEE 802.11: associated/ {print $1 " " $2 " " $3 ", " $9 }'|procaplog
 fi
 if [ "$EVT2" != "0" ]; then
 	cp "$LOG2" "$LOG2.old" 
-	tail -n "$EVT2" "$LOG2" |  awk '/WPA: pairwise key handshake completed/ {print $1 " " $2 " " $3 ", " $9 }'|procaplog
+	tail -n "$EVT2" "$LOG2" |  awk '/IEEE 802.11: associated/ {print $1 " " $2 " " $3 ", " $9 }'|procaplog
 fi
 if [ "$EVT3" != "0" ]; then
 	cp "$LOG3" "$LOG3.old" 

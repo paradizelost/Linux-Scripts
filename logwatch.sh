@@ -37,6 +37,16 @@ function procaplog(){
 				fi
 				/root/bin/sheet.py "$date" $HOSTNAME
 				;;
+			ALLI_S7)
+				if [ $SENDALERT -eq 1 ]; then 
+					echo "Alerting Dan"
+					echo "Alerting Dan" >> /var/log/logwatch.log
+					alert_dan "Alli is home at $date" 
+				else
+					echo "Not alerting, Reconnection of $HOSTNAME" >> /var/log/logwatch.log
+				fi
+				/root/bin/sheet.py "$date" $HOSTNAME
+				;;
 			*)
 				echo "No Match with -$HOSTNAME- alerting"
 				echo "No Match with -$HOSTNAME- alerting">> /var/log/logwatch.log
@@ -56,7 +66,7 @@ function procaplog(){
 };
 function checkdisconnects(){
 	THISCHECK=$(date -d "$1" +%s)
-	if [ "$(tail -n 30 "$LOG2" "$LOG" | grep "$(date +"%b %e")" |  grep "$2" | grep "disassociated")" ]; then
+	if [ "$(tail -n 30 "$LOG2" "$LOG" | grep "$(date +"%b %e")" |  grep "$2" | grep "disassociated" |wc -l)" -gt 0 ]; then
 		echo 0
 	else
 		echo 1

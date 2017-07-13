@@ -13,7 +13,7 @@ function procaplog(){
 		SENDALERT=$(checkdisconnects "$date" $mac)
 		echo "starting mac check"
 		echo "starting mac check" >> /var/log/logwatch.log
-		HOSTNAME=$(checkmac $mac)
+		HOSTNAME=$(/root/bin/hostlookup.py $mac "$date")
 		if [ "$HOSTNAME" ]; then 
 			echo "__ $HOSTNAME __"
 			echo "__ $HOSTNAME __" >> /var/log/logwatch.log
@@ -25,7 +25,32 @@ function procaplog(){
 				else
 					echo "Not alerting, Reconnection of $HOSTNAME" >> /var/log/logwatch.log
 				fi
-				python /root/bin/docast.py
+				python /root/bin/button1.py "$HOSTNAME" "$date"
+				#castnow --address 192.168.1.103 http://192.168.1.14/doorbell.mp3 --exit
+				;;
+			HEFTY)
+				/root/bin/sleeptracker.py "$date"
+			;;
+			COLGATE)
+				/root/bin/sleeptracker.py "$date"
+			;;
+			AMAZON_BASICS_BATTERIES)
+				/root/bin/sleeptracker.py "$date"
+			;;
+			CASCADE)
+				/root/bin/sleeptracker.py "$date"
+			;;
+			Charmin_1)
+				/root/bin/feedings.py "$date"
+			;;
+			CHARMIN_2)
+				/root/bin/feedings.py "$date"
+			;;
+			DIRTY_DIAPER)
+				/root/bin/diaper.py "$date" soiled
+				;;
+			WET_DIAPER)
+				/root/bin/diaper.py "$date" wet
 				;;
 			DAN_PIXEL)
 				if [ $SENDALERT -eq 1 ]; then 
